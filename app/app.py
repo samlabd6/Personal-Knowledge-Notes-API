@@ -1,31 +1,62 @@
-from fastapi import FastAPI, HTTPException 
+from fastapi import FastAPI, HTTPException, Depends, Query  
 from schemas import PostCreate
+from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
+from typing import Annotated, Optional, List
+from datetime import datetime
+
+
+class User(SQLModel, table=True):
+    __tablename__ = "users"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True, nullable=False, unique=True)
+    email: Optional[str] = Field(default=None, unique=True)
+    password_hash: str = Field(nullable=False)
+
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow
+    )
+
+    # relationship
+    notes: List["Note"] = Relationship(back_populates="user")
+
+
+class Note(SQLModel, table=True):
+    __tablename__ = "notes"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", nullable=False)
+
+    title: str = Field(nullable=False)
+    context: Optional[str] = None
+
+    created_at: datetime = Field(
+        default_factory=datetime.utcnow
+    )
+    updated_at: datetime = Field(
+        default_factory=datetime.utcnow
+    )
+
+    is_archived: bool = Field(default=False)
+
+    user: Optional[User] = Relationship(back_populates="notes")
+
+filename = "notes.db"
+DATABASE_URL = f"sqlite:///{filename}"
+
+engine = create_engine(DATABASE_URL, echo=True)
+
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
+def get_session():
+    with Session(engine) as session: 
+        yield Session
+
+SessionDep = Annotated[Session, Depends(get_session)]
+
 
 app = FastAPI()
-
-notes = {
-1: {"title: new notice", "content: mynotice"},
-2: {"title: shopping reminder", "content: buy milk and bread"},
-3: {"title: study note", "content: review fastapi basics"},
-4: {"title: meeting", "content: team sync at 10am"},
-5: {"title: idea", "content: personal knowledge api concept"},
-6: {"title: todo", "content: clean workspace"},
-7: {"title: reminder", "content: call mom"},
-8: {"title: learning", "content: sqlite persistence test"},
-9: {"title: thought", "content: keep project simple"},
-10: {"title: note", "content: error handling needs work"},
-11: {"title: task", "content: push project to git"},
-12: {"title: habit", "content: drink more water"},
-13: {"title: plan", "content: finish api endpoints"},
-14: {"title: idea", "content: add search later"},
-15: {"title: reminder", "content: backup database file"},
-16: {"title: learning", "content: understand uvicorn errors"},
-17: {"title: note", "content: refactor after mvp"},
-18: {"title: thought", "content: simple is better"},
-19: {"title: task", "content: test delete endpoint"},
-20: {"title: plan", "content: stop overengineering"}
-
-}
 
 @app.get("/posts")
 def get_all_posts(limit: int = None):
@@ -42,8 +73,15 @@ def get_post(id: int):
 
 
 @app.post("/posts")                  # This section below requires that the function only recieves of the PostCreate Schema - and not allow the return of other schema
-def create_posts(post: PostCreate) -> PostCreate: # fastapi knows automatically that we are recieving a request-body because of pedantic
+def create_post(post: PostCreate) -> PostCreate: # fastapi knows automatically that we are recieving a request-body because of pedantic
     new_notice = {"title": post.title, "content": post.content} 
     notes[max(notes.keys()) + 1] = new_notice 
     return new_notice   # because we specified the schema with "-> PostCreate " we can only return that format specified in our schema. 
 
+@app.put("/posts/{id}")
+def update_post(id: int):
+    pass
+
+@app.delete("/posts/{id}")
+def delete_post(id: int):
+    pass
