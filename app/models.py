@@ -1,16 +1,9 @@
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Text,
-    DateTime,
-    Boolean,
-    ForeignKey,
-    func,
+    Column, Integer, String, Text,
+    DateTime, Boolean, ForeignKey, func
 )
-from sqlalchemy.orm import declarative_base, relationship
-
-Base = declarative_base()
+from sqlalchemy.orm import relationship
+from database import Base
 
 
 class User(Base):

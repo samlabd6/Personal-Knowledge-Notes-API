@@ -1,42 +1,44 @@
 from fastapi import FastAPI, HTTPException, Depends
-from schemas import Users, Notes
-from datetime import date
-from pydantic import BaseModel
-from database import get_db, Base, SessionDep
-from models import User, Note
-from sqlalchemy import Session
+from sqlalchemy.orm import Session
 
-@app.get("/notices")
+from database import get_db, engine
+from models import Base, Note
+from schemas import NoteCreate, NoteResponse
+
+app = FastAPI()
+
+Base.metadata.create_all(bind=engine)
+
+@app.get("/notices", response_model=list[NoteResponse])
 def get_all_posts(db: Session = Depends(get_db)):
-    notices = Note
-    return notices
+    return db.query(Note).all()
 
 
-@app.get("/notices/{id}")
-def get_post(id: int, session: SessionDep) -> Note:
-    notice = session.get(Note, id)
-    if not Note:
+@app.get("/notices/{id}", response_model=NoteResponse)
+def get_post(id: int, db: Session = Depends(get_db) ):
+    notice = get_db(Note, id)
+    if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     return notice
 
 
-@app.post("/notices")                 
-def create_notice(notice: Note, session: SessionDep) -> Note:
-    session.add(notice)
-    session.commit()
-    session.refresh(notice)
-    return notice
+@app.post("/notices", response_model=NoteResponse)                 
+def create_notice(notice: NoteCreate,db: Session = Depends(get_db)):
+    new_note = Note(**notice.dict())
+    db.add(new_note)
+    db.commit()
+    db.refresh(notice)
+    return new_note
 
-
-@app.put("/posts/{id}")
+@app.put("/posts/{id}") 
 def update_post(id: int):
     pass
 
-@app.delete("/posts/{id}")
-def delete_post(id: int, session: SessionDep):
-    notice = session.get(Note, id)
+@app.delete("/posts/{id}", response_model=NoteResponse)
+def delete_post(id: int, db: Session = Depends(get_db)):
+    notice = db.get(Note, id)
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
-    session.delete(notice)
-    session.commit()
+    db.delete(notice)
+    db.commit()
     return {"ok": True}
