@@ -16,29 +16,29 @@ def get_all_posts(db: Session = Depends(get_db)):
 
 @app.get("/notices/{id}", response_model=NoteResponse)
 def get_post(id: int, db: Session = Depends(get_db) ):
-    notice = get_db(Note, id)
+    notice = db.get(Note, id)
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     return notice
 
 
 @app.post("/notices", response_model=NoteResponse)                 
-def create_notice(notice: NoteCreate,db: Session = Depends(get_db)):
+def create_notice(notice: NoteCreate, db: Session = Depends(get_db)):
     new_note = Note(**notice.dict())
     db.add(new_note)
     db.commit()
-    db.refresh(notice)
+    db.refresh(new_note)
     return new_note
 
 @app.put("/posts/{id}") 
 def update_post(id: int):
     pass
 
-@app.delete("/posts/{id}", response_model=NoteResponse)
+@app.delete("/posts/{id}")
 def delete_post(id: int, db: Session = Depends(get_db)):
     notice = db.get(Note, id)
     if not notice:
         raise HTTPException(status_code=404, detail="Notice not found")
     db.delete(notice)
     db.commit()
-    return {"ok": True}
+    return {"message": "Notice deleted successfully"}
