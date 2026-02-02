@@ -3,7 +3,7 @@ from schemas import PostCreate
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
 from typing import Annotated, Optional, List
 from datetime import datetime
-
+from contextlib import asynccontextmanager 
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
@@ -17,7 +17,6 @@ class User(SQLModel, table=True):
         default_factory=datetime.utcnow
     )
 
-    # relationship
     notes: List["Note"] = Relationship(back_populates="user")
 
 
@@ -31,7 +30,7 @@ class Note(SQLModel, table=True):
     context: Optional[str] = None
 
     created_at: datetime = Field(
-        default_factory=datetime.utcnow
+        default_factory=lambda: datetime.now(timezone.utc)
     )
     updated_at: datetime = Field(
         default_factory=datetime.utcnow
@@ -51,37 +50,51 @@ def create_db_and_tables():
 
 def get_session():
     with Session(engine) as session: 
-        yield Session
+        yield session
 
 SessionDep = Annotated[Session, Depends(get_session)]
 
 
-app = FastAPI()
-
-@app.get("/posts")
-def get_all_posts(limit: int = None):
-    if limit: 
-        return list(notes.values())[:limit]
-    return notes 
-
-@app.get("/posts/{id}")
-def get_post(id: int):
-    if id not in notes:
-        raise HTTPException(status_code=404, detail="Post not found")
-    
-    return notes.get(id)
+@asynccontextmanager
+async def lifespan(app: FastAPI): 
+    create_db_and_tables()
 
 
-@app.post("/posts")                  # This section below requires that the function only recieves of the PostCreate Schema - and not allow the return of other schema
-def create_post(post: PostCreate) -> PostCreate: # fastapi knows automatically that we are recieving a request-body because of pedantic
-    new_notice = {"title": post.title, "content": post.content} 
-    notes[max(notes.keys()) + 1] = new_notice 
-    return new_notice   # because we specified the schema with "-> PostCreate " we can only return that format specified in our schema. 
+app = FastAPI(lifespan=lifespan)
+
+@app.get("/notices")
+def get_all_posts(session: SessionDep, 
+                  offset: int = 0, 
+                  limit: Annotated[int, Query(le=100)] = 100) -> list[Note]:
+    notices = session.exec(select(Note).offset(offset).limit(limit)).all()
+    return notices
+
+
+@app.get("/notices/{id}")
+def get_post(id: int, session: SessionDep) -> Note:
+    notice = session.get(Note, id)
+    if not Note:
+        raise HTTPException(status_code=404, detail="Notice not found")
+    return notice
+
+
+@app.post("/notices")                 
+def create_notice(notice: Note, session: SessionDep) -> Note:
+    session.add(notice)
+    session.commit()
+    session.refresh(notice)
+    return notice
+
 
 @app.put("/posts/{id}")
 def update_post(id: int):
     pass
 
 @app.delete("/posts/{id}")
-def delete_post(id: int):
-    pass
+def delete_post(id: int, session: SessionDep):
+    notice = session.get(Note, id)
+    if not notice:
+        raise HTTPException(status_code=404, detail="Notice not found")
+    session.delete(notice)
+    session.commit()
+    return {"ok": True}
