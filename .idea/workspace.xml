@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b5c35c62-f1bb-433c-941e-68733d091196" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/app/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/app.py" afterDir="false" />
-    </list>
+    <list default="true" id="b5c35c62-f1bb-433c-941e-68733d091196" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -29,7 +27,7 @@
     "Python.app.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "second__branch",
+    "git-widget-placeholder": "orvin",
     "last_opened_file_path": "/home/ovin/Desktop/Personal-Knowledge-Notes-API/app"
   },
   "keyToStringList": {
@@ -69,11 +67,6 @@
     </option>
     <option name="TAB_STATES">
       <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
         <entry key="fe603cc1-3fc1-44dd-988b-22fcfbf29ad3">
           <value>
             <State />
