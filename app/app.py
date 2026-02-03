@@ -2,8 +2,8 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db, engine
-from models import Base, Note
-from schemas import NoteCreate, NoteResponse
+from models import Base, Note, User
+from schemas import NoteCreate, NoteResponse, UserCreate, UserResponse
 
 app = FastAPI()
 
@@ -24,11 +24,15 @@ def get_post(id: int, db: Session = Depends(get_db) ):
 
 @app.post("/notices", response_model=NoteResponse)                 
 def create_notice(notice: NoteCreate, db: Session = Depends(get_db)):
-    new_note = Note(**notice.dict())
-    db.add(new_note)
-    db.commit()
-    db.refresh(new_note)
-    return new_note
+    try:
+        new_note = Note(**notice.dict())
+        db.add(new_note)
+        db.commit()
+        db.refresh(new_note)
+        return new_note
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 @app.put("/posts/{id}") 
 def update_post(id: int):
@@ -36,9 +40,26 @@ def update_post(id: int):
 
 @app.delete("/posts/{id}")
 def delete_post(id: int, db: Session = Depends(get_db)):
-    notice = db.get(Note, id)
-    if not notice:
-        raise HTTPException(status_code=404, detail="Notice not found")
-    db.delete(notice)
-    db.commit()
-    return {"message": "Notice deleted successfully"}
+    try:
+        notice = db.get(Note, id)
+        if not notice:
+            raise HTTPException(status_code=404, detail="Notice not found")
+        db.delete(notice)
+        db.commit()
+        return {"message": "Notice deleted successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@app.post("/users", response_model=UserResponse)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    try:
+        new_user = User(username=user.username, email=user.email, password_hash=user.password)
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
