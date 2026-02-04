@@ -1,7 +1,7 @@
 Concept Build a REST API that lets users store, tag, search, and manage notes or knowledge entries (like a lightweight personal wiki or PKM backend). This is realistic, simple, and covers all core REST operations. 
 
-
-'''mermaid
+## ERD
+```mermaid
 erDiagram
     USERS {
         int id PK
@@ -22,3 +22,4 @@ erDiagram
     }
 
     USERS ||--o{ NOTES : "has"
+```
