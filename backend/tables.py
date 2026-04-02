@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, Text,
+    Column, Integer, LargeBinary, String, Text,
     DateTime, Boolean, ForeignKey, func
 )
 from sqlalchemy.orm import relationship
@@ -11,7 +11,8 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String, nullable=False, unique=True)
-    email = Column(String, unique=True)
+    email = Column(String, nullable=False, unique=True)
+    salt = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime, server_default=func.current_timestamp())
 
