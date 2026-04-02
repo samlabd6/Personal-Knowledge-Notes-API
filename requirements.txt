@@ -3,3 +3,7 @@ uvicorn
 sqlalchemy
 sqlalchemy.orm
 pydantic
+pwdlib[argon2]
+hashlib
+python-dotenv   
+PyJWT 
